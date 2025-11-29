@@ -9,6 +9,8 @@ import { Navbar } from "@/components/navbar";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/db"; // Import db client
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Define types based on Prisma schema
 type Course = {
@@ -43,6 +45,8 @@ export default function HomePage() {
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -382,11 +386,18 @@ export default function HomePage() {
                       <Button 
                         className="w-full bg-brand hover:bg-brand/90 text-white" 
                         variant="default"
-                        asChild
+                        onClick={() => {
+                          if (!session?.user) {
+                            router.push("/sign-in");
+                            return;
+                          }
+                          const courseUrl = course.chapters && course.chapters.length > 0 
+                            ? `/courses/${course.id}/chapters/${course.chapters[0].id}` 
+                            : `/courses/${course.id}`;
+                          router.push(courseUrl);
+                        }}
                       >
-                        <Link href={course.chapters && course.chapters.length > 0 ? `/courses/${course.id}/chapters/${course.chapters[0].id}` : `/courses/${course.id}`}>
-                          {course.progress === 100 ? "عرض الكورس" : "عرض الكورس"}
-                        </Link>
+                        {course.progress === 100 ? "عرض الكورس" : "عرض الكورس"}
                       </Button>
                     </div>
                   </motion.div>

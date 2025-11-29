@@ -55,8 +55,7 @@ body,
 
 :root {
   --radius: 0.625rem;
-  /* --brand is set dynamically by ThemeProvider from lib/theme.ts */
-  --brand: #5A0E24; /* Fallback value matching theme.ts, will be overridden by ThemeProvider */
+  /* --brand is set dynamically from lib/theme.ts via inline script in layout.tsx */
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 144.695);
   --card: oklch(1 0 0);

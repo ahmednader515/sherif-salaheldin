@@ -189,7 +189,7 @@ const NavigationLoadingContent = () => {
       }
       safetyTimeoutRef.current = setTimeout(() => {
         stopNavigating();
-      }, 8000);
+      }, 6000);
       return () => {
         if (safetyTimeoutRef.current) {
           clearTimeout(safetyTimeoutRef.current);

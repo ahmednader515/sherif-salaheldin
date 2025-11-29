@@ -6,6 +6,7 @@ import { Providers } from "@/components/providers";
 import { Footer } from "@/components/footer";
 import { NavigationLoading } from "@/components/navigation-loading";
 import { Suspense } from "react";
+import { theme } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +43,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 if (document.documentElement) {
-                  document.documentElement.style.setProperty('--brand', '#5A0E24');
+                  document.documentElement.style.setProperty('--brand', '${theme.brand}');
                 }
               })();
             `,
