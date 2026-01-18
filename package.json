@@ -11,6 +11,7 @@
     "prisma:studio": "prisma studio --port 5556",
     "migrate:aiven": "ts-node scripts/migrate-aiven-to-prisma.ts",
     "fix:quiz-options": "node scripts/fix-quiz-options.js",
+    "migrate-uploadthing": "npx tsx ./scripts/migrate-uploadthing-files.ts",
     "test:quiz-options": "node scripts/test-quiz-options.js",
     "postinstall": "prisma generate"
   },
