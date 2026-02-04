@@ -45,6 +45,7 @@ interface User {
     phoneNumber: string;
     parentPhoneNumber: string;
     role: string;
+    grade?: string | null;
     balance: number;
     createdAt: string;
     updatedAt: string;
@@ -60,6 +61,7 @@ interface EditUserData {
     phoneNumber: string;
     parentPhoneNumber: string;
     role: string;
+    grade?: string;
 }
 
 const UsersPage = () => {
@@ -71,7 +73,8 @@ const UsersPage = () => {
         fullName: "",
         phoneNumber: "",
         parentPhoneNumber: "",
-        role: ""
+        role: "",
+        grade: ""
     });
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -108,7 +111,8 @@ const UsersPage = () => {
             fullName: user.fullName,
             phoneNumber: user.phoneNumber,
             parentPhoneNumber: user.parentPhoneNumber,
-            role: user.role
+            role: user.role,
+            grade: user.grade || ""
         });
         setIsEditDialogOpen(true);
     };
@@ -117,12 +121,19 @@ const UsersPage = () => {
         if (!editingUser) return;
 
         try {
+            // Prepare data to send - ensure grade is included for students
+            const dataToSend = { ...editData };
+            if (editData.role === "USER") {
+                // For students, always include grade (even if empty, it will be set to null)
+                dataToSend.grade = editData.grade || null;
+            }
+
             const response = await fetch(`/api/teacher/users/${editingUser.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(editData),
+                body: JSON.stringify(dataToSend),
             });
 
             if (response.ok) {
@@ -525,6 +536,26 @@ const UsersPage = () => {
                                                                     </SelectContent>
                                                                 </Select>
                                                             </div>
+                                                            {editData.role === "USER" && (
+                                                                <div className="grid grid-cols-4 items-center gap-4">
+                                                                    <Label htmlFor="grade" className="text-right">
+                                                                        الصف الدراسي
+                                                                    </Label>
+                                                                    <Select
+                                                                        value={editData.grade || undefined}
+                                                                        onValueChange={(value) => setEditData({...editData, grade: value})}
+                                                                    >
+                                                                        <SelectTrigger className="col-span-3">
+                                                                            <SelectValue placeholder="اختر الصف الدراسي" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            <SelectItem value="الصف الأول الثانوي">الصف الأول الثانوي</SelectItem>
+                                                                            <SelectItem value="الصف الثاني الثانوي">الصف الثاني الثانوي</SelectItem>
+                                                                            <SelectItem value="الصف الثالث الثانوي">الصف الثالث الثانوي</SelectItem>
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <DialogFooter>
                                                             <Button variant="outline" onClick={() => {

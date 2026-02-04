@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/db"; // Import db client
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { RecaptchaGate } from "@/components/recaptcha-gate";
 
 // Define types based on Prisma schema
 type Course = {
@@ -109,8 +108,7 @@ export default function HomePage() {
   };
 
   return (
-    <RecaptchaGate>
-      <div className="h-full w-full bg-background">
+    <div className="h-full w-full bg-background">
         <Navbar />
         <ScrollProgress />
       {/* Hero Section */}
@@ -572,6 +570,5 @@ export default function HomePage() {
         </div>
       </section>
       </div>
-    </RecaptchaGate>
   );
 } 

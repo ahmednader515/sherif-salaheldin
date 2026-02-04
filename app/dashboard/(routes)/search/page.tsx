@@ -29,13 +29,32 @@ export default async function SearchPage({
     const resolvedParams = await searchParams;
     const title = typeof resolvedParams.title === 'string' ? resolvedParams.title : '';
 
+    // Get user's grade
+    const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { grade: true }
+    });
+
+    const userGrade = user?.grade;
+
+    // Build where clause - show courses that match user's grade OR courses without grade specified
+    const whereClause: any = {
+        isPublished: true,
+        title: {
+            contains: title,
+        }
+    };
+
+    // If user has a grade, filter courses by grade (or courses without grade)
+    if (userGrade) {
+        whereClause.OR = [
+            { grade: userGrade },
+            { grade: null }
+        ];
+    }
+
     const courses = await db.course.findMany({
-        where: {
-            isPublished: true,
-            title: {
-                contains: title,
-            }
-        },
+        where: whereClause,
         include: {
             chapters: {
                 where: {

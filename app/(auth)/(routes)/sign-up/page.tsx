@@ -11,7 +11,13 @@ import axios, { AxiosError } from "axios";
 import { Check, X, Eye, EyeOff, ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import ReCAPTCHA from "react-google-recaptcha";
-import { RecaptchaGate } from "@/components/recaptcha-gate";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -26,6 +32,7 @@ export default function SignUpPage() {
     parentPhoneNumber: "",
     password: "",
     confirmPassword: "",
+    grade: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,6 +40,13 @@ export default function SignUpPage() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleGradeChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      grade: value,
     }));
   };
 
@@ -51,6 +65,12 @@ export default function SignUpPage() {
 
     if (!passwordChecks.isValid) {
       toast.error("كلمات المرور غير متطابقة");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.grade) {
+      toast.error("يرجى اختيار الصف الدراسي");
       setIsLoading(false);
       return;
     }
@@ -99,8 +119,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <RecaptchaGate>
-      <div className="flex min-h-screen bg-background overflow-y-auto">
+    <div className="flex min-h-screen bg-background overflow-y-auto">
       <div className="absolute top-4 left-4 z-10">
         <Button variant="ghost" size="lg" asChild>
           <Link href="/">
@@ -194,6 +213,23 @@ export default function SignUpPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="grade">الصف الدراسي</Label>
+              <Select
+                value={formData.grade}
+                onValueChange={handleGradeChange}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="اختر الصف الدراسي" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="الصف الأول الثانوي">الصف الأول الثانوي</SelectItem>
+                  <SelectItem value="الصف الثاني الثانوي">الصف الثاني الثانوي</SelectItem>
+                  <SelectItem value="الصف الثالث الثانوي">الصف الثالث الثانوي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="password">كلمة المرور</Label>
               <div className="relative">
                 <Input
@@ -280,7 +316,7 @@ export default function SignUpPage() {
             <Button
               type="submit"
               className="w-full h-10 bg-brand hover:bg-brand/90 text-white"
-              disabled={isLoading || !passwordChecks.isValid || !recaptchaToken}
+              disabled={isLoading || !passwordChecks.isValid || !recaptchaToken || !formData.grade}
             >
               {isLoading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
             </Button>
@@ -297,6 +333,5 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
-    </RecaptchaGate>
   );
 } 

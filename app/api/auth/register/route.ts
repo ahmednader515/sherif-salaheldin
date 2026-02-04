@@ -29,9 +29,9 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
 
 export async function POST(req: Request) {
   try {
-    const { fullName, phoneNumber, parentPhoneNumber, password, confirmPassword, recaptchaToken } = await req.json();
+    const { fullName, phoneNumber, parentPhoneNumber, password, confirmPassword, recaptchaToken, grade } = await req.json();
 
-    if (!fullName || !phoneNumber || !parentPhoneNumber || !password || !confirmPassword) {
+    if (!fullName || !phoneNumber || !parentPhoneNumber || !password || !confirmPassword || !grade) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
 
@@ -84,6 +84,7 @@ export async function POST(req: Request) {
         parentPhoneNumber,
         hashedPassword,
         role: "USER",
+        grade,
       },
     });
 
