@@ -9,6 +9,7 @@
     "lint": "next lint",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio --port 5556",
+    "migrate:db": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" scripts/migrate-old-db-to-new-db.ts",
     "migrate:aiven": "ts-node scripts/migrate-aiven-to-prisma.ts",
     "fix:quiz-options": "node scripts/fix-quiz-options.js",
     "migrate-uploadthing": "npx tsx ./scripts/migrate-uploadthing-files.ts",

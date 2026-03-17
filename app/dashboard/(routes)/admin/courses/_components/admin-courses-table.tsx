@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -144,6 +144,11 @@ export function AdminCoursesTable<TData extends { id: string }, TValue>({
                                     {!hideActions && (
                                         <TableCell>
                                             <div className="flex items-center gap-2">
+                                                <Link href={`/dashboard/admin/courses/${row.original.id}/students`}>
+                                                    <Button variant="outline" size="icon" title="عرض الطلاب المشترين">
+                                                        <Users className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                                 <Link href={`/dashboard/admin/courses/${row.original.id}`}>
                                                     <Button className="bg-brand hover:bg-brand/90 text-white" size="icon">
                                                         <Pencil className="h-4 w-4" />
