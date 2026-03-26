@@ -19,6 +19,8 @@ model User {
   role                    String    @default("USER")
   balance                 Float     @default(0)
   grade                   String?   // الصف الدراسي
+  isActive                Boolean   @default(false)
+  activeSessionId         String?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
   courses                 Course[]

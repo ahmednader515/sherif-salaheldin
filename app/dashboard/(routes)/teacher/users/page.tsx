@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Edit, Trash2 } from "lucide-react";
+import { Search, Edit, Trash2, BookOpen } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { toast } from "sonner";
@@ -64,6 +64,13 @@ interface EditUserData {
     grade?: string;
 }
 
+interface OwnedCourse {
+    id: string;
+    title: string;
+    price: number | null;
+    isPublished: boolean;
+}
+
 const UsersPage = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -78,6 +85,12 @@ const UsersPage = () => {
     });
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [isCoursesDialogOpen, setIsCoursesDialogOpen] = useState(false);
+    const [coursesLoading, setCoursesLoading] = useState(false);
+    const [coursesError, setCoursesError] = useState<string | null>(null);
+    const [coursesStudent, setCoursesStudent] = useState<User | null>(null);
+    const [ownedCourses, setOwnedCourses] = useState<OwnedCourse[]>([]);
 
     useEffect(() => {
         fetchUsers();
@@ -115,6 +128,30 @@ const UsersPage = () => {
             grade: user.grade || ""
         });
         setIsEditDialogOpen(true);
+    };
+
+    const openStudentCourses = async (student: User) => {
+        setCoursesStudent(student);
+        setOwnedCourses([]);
+        setCoursesError(null);
+        setIsCoursesDialogOpen(true);
+        setCoursesLoading(true);
+
+        try {
+            const response = await fetch(`/api/teacher/users/${student.id}/courses`);
+            if (!response.ok) {
+                const msg = await response.text();
+                throw new Error(msg || "Failed to load courses");
+            }
+            const data = await response.json();
+            setOwnedCourses((data?.courses || []) as OwnedCourse[]);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "حدث خطأ";
+            setCoursesError(message);
+            toast.error("حدث خطأ في تحميل كورسات الطالب");
+        } finally {
+            setCoursesLoading(false);
+        }
     };
 
     const handleSaveUser = async () => {
@@ -462,6 +499,15 @@ const UsersPage = () => {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => openStudentCourses(user)}
+                                                    title="عرض الكورسات المشتركة"
+                                                >
+                                                    <BookOpen className="h-4 w-4" />
+                                                </Button>
+
                                                 <Dialog open={isEditDialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
                                                     if (!open) {
                                                         setIsEditDialogOpen(false);
@@ -618,6 +664,56 @@ const UsersPage = () => {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Student courses prompt */}
+            <Dialog open={isCoursesDialogOpen} onOpenChange={(open) => {
+                setIsCoursesDialogOpen(open);
+                if (!open) {
+                    setCoursesStudent(null);
+                    setOwnedCourses([]);
+                    setCoursesError(null);
+                    setCoursesLoading(false);
+                }
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            كورسات الطالب{coursesStudent ? `: ${coursesStudent.fullName}` : ""}
+                        </DialogTitle>
+                        <DialogDescription>
+                            قائمة الكورسات التي اشترك بها الطالب (مشتريات نشطة).
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-2">
+                        {coursesLoading ? (
+                            <div className="text-center text-muted-foreground">جاري التحميل...</div>
+                        ) : coursesError ? (
+                            <div className="text-center text-destructive">{coursesError}</div>
+                        ) : ownedCourses.length === 0 ? (
+                            <div className="text-center text-muted-foreground">لا يوجد كورسات.</div>
+                        ) : (
+                            <div className="space-y-2">
+                                {ownedCourses.map((c) => (
+                                    <div key={c.id} className="flex items-center justify-between rounded-md border p-3">
+                                        <div className="font-medium">{c.title}</div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline">{c.price ?? 0} جنيه</Badge>
+                                            <Badge variant="secondary">{c.isPublished ? "منشور" : "غير منشور"}</Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCoursesDialogOpen(false)}>
+                            إغلاق
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

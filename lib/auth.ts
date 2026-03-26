@@ -7,11 +7,23 @@ import { Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prismaAdapter } from "@/lib/auth/prisma-adapter";
+import crypto from "crypto";
 
 export const auth = async () => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
+    redirect("/sign-in");
+  }
+
+  // Enforce single-device session: sessionId must match user's activeSessionId.
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isActive: true, activeSessionId: true },
+  });
+
+  const sessionId = (session.user as any).sessionId as string | undefined;
+  if (!dbUser?.isActive || !dbUser.activeSessionId || !sessionId || dbUser.activeSessionId !== sessionId) {
     redirect("/sign-in");
   }
 
@@ -88,12 +100,19 @@ export const authOptions: AuthOptions = {
         session.user.phoneNumber = token.phoneNumber;
         session.user.image = token.picture ?? undefined;
         session.user.role = token.role;
+        (session.user as any).sessionId = (token as any).sessionId;
       }
 
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
+        const sessionId = crypto.randomUUID();
+        // Mark user active and bind token to this sessionId
+        await db.user.update({
+          where: { id: user.id as string },
+          data: { isActive: true, activeSessionId: sessionId },
+        });
         // When user first signs in, set the token with user data
         return {
           ...token,
@@ -102,6 +121,7 @@ export const authOptions: AuthOptions = {
           phoneNumber: user.phoneNumber,
           picture: (user as any).picture,
           role: user.role,
+          sessionId,
         };
       }
 

@@ -9,6 +9,7 @@ declare module "next-auth" {
       image?: string;
       phoneNumber?: string;
       role: string;
+      sessionId?: string;
     };
   }
 
@@ -28,5 +29,6 @@ declare module "next-auth/jwt" {
     email: string;
     phoneNumber?: string;
     role: string;
+    sessionId?: string;
   }
 } 

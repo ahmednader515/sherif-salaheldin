@@ -10,8 +10,19 @@ import { LogOut } from "lucide-react";
 export const Navbar = () => {
   const { data: session } = useSession();
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/" });
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: (session?.user as any)?.sessionId }),
+      });
+    } finally {
+      await signOut({ redirect: false });
+      if (typeof window !== "undefined") {
+        window.location.replace("/");
+      }
+    }
   };
 
   return (

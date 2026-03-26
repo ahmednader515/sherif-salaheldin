@@ -101,7 +101,20 @@ export const UserButton = () => {
             تغيير الصف الدراسي
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => signOut()}
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ sessionId: (session?.user as any)?.sessionId }),
+                });
+              } finally {
+                await signOut({ redirect: false });
+                if (typeof window !== "undefined") {
+                  window.location.replace("/");
+                }
+              }
+            }}
             className="text-red-600 cursor-pointer"
           >
             <LogOut className="h-4 w-4 mr-2" />

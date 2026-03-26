@@ -12,11 +12,22 @@ import { signIn } from "next-auth/react";
 import { Eye, EyeOff, ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import { getDashboardUrlByRole } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SignInPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isConflictOpen, setIsConflictOpen] = useState(false);
+  const [conflictName, setConflictName] = useState<string | null>(null);
+  const [isForcingLogout, setIsForcingLogout] = useState(false);
   const [formData, setFormData] = useState({
     phoneNumber: "",
     password: "",
@@ -35,6 +46,19 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
+      // Pre-check: if account is active elsewhere, show prompt instead of failing sign-in.
+      const activeRes = await fetch("/api/auth/check-active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber: formData.phoneNumber }),
+      });
+      const activeData = await activeRes.json().catch(() => ({}));
+      if (activeRes.ok && activeData?.isActive) {
+        setConflictName(activeData?.fullName || null);
+        setIsConflictOpen(true);
+        return;
+      }
+
       const result = await signIn("credentials", {
         phoneNumber: formData.phoneNumber,
         password: formData.password,
@@ -69,6 +93,60 @@ export default function SignInPage() {
       toast.error("حدث خطأ أثناء تسجيل الدخول");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const forceLogoutAndLogin = async () => {
+    setIsForcingLogout(true);
+    try {
+      const res = await fetch("/api/auth/force-logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: formData.phoneNumber,
+          password: formData.password,
+        }),
+      });
+
+      if (!res.ok) {
+        toast.error("تعذر تسجيل الخروج من الجهاز الآخر");
+        return;
+      }
+
+      setIsConflictOpen(false);
+
+      const result = await signIn("credentials", {
+        phoneNumber: formData.phoneNumber,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        if (result.error === "CredentialsSignin") {
+          toast.error("رقم الهاتف أو كلمة المرور غير صحيحة");
+        } else {
+          toast.error("حدث خطأ أثناء تسجيل الدخول");
+        }
+        return;
+      }
+
+      toast.success("تم تسجيل الدخول بنجاح");
+
+      const response = await fetch("/api/auth/session", { cache: "no-store" });
+      const sessionData = await response.json();
+      const userRole = sessionData?.user?.role || "USER";
+      const dashboardUrl = getDashboardUrlByRole(userRole);
+
+      const target = `${dashboardUrl}?t=${Date.now()}`;
+      if (typeof window !== "undefined") {
+        window.location.replace(target);
+      } else {
+        router.replace(target);
+      }
+    } catch {
+      toast.error("حدث خطأ");
+    } finally {
+      setIsForcingLogout(false);
     }
   };
 
@@ -187,6 +265,30 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isConflictOpen} onOpenChange={(open) => {
+        setIsConflictOpen(open);
+        if (!open) setConflictName(null);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>الحساب مفتوح على جهاز آخر</DialogTitle>
+            <DialogDescription>
+              {conflictName ? `يبدو أن حساب (${conflictName}) قيد الاستخدام حالياً.` : "يبدو أن هذا الحساب قيد الاستخدام حالياً."}
+              <br />
+              هل تريد تسجيل الخروج من الجهاز الآخر وتسجيل الدخول على هذا الجهاز؟
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsConflictOpen(false)} disabled={isForcingLogout}>
+              إلغاء
+            </Button>
+            <Button onClick={forceLogoutAndLogin} disabled={isForcingLogout} className="bg-brand hover:bg-brand/90 text-white">
+              {isForcingLogout ? "جارٍ المتابعة..." : "تسجيل الخروج من الجهاز الآخر"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

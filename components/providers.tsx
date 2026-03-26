@@ -8,6 +8,7 @@ import { RTLProvider } from "@/components/providers/rtl-provider";
 import { ThemeProvider as BrandThemeProvider } from "@/components/theme-provider";
 import { NavigationProvider } from "@/lib/contexts/navigation-context";
 import { useEffect } from "react";
+import { SessionEnforcer } from "@/components/session-enforcer";
 
 // Component to handle session loading states
 const SessionHandler = ({ children }: { children: React.ReactNode }) => {
@@ -42,6 +43,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
             >
               <NavigationProvider>
                 <ToastProvider />
+                <SessionEnforcer />
                 {children}
                 <Toaster />
               </NavigationProvider>
